@@ -1,12 +1,10 @@
 // Set current year in the footer
 document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-// Constants and state
-let API_BASE_URL;
-
-// For Replit environment, directly use the current origin
-// since Django serves both frontend and backend now
-API_BASE_URL = `${window.location.origin}/api`;
+const isProduction = window.location.hostname !== 'localhost';
+const API_BASE_URL = isProduction 
+    ? 'https://truck-route-backend-1.onrender.com/api'
+    : `${window.location.origin}/api`;
 
 console.log('Using API base URL:', API_BASE_URL);
 
