@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Truck Route Planner with HOS Compliance"
+    />
+    <title>Truck Route Planner</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Feather Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Load React from CDN -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    
+    <!-- Load Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <!-- Load Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    
+    <!-- Polyline encoding/decoding (if needed) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mapbox/polyline@1.1.1/src/polyline.js"></script>
+    
+    <style>
+      /* Add any custom styles here */
+      .map-container {
+        height: 500px;
+        width: 100%;
+      }
+
+      /* Override for leaflet markers with Font Awesome */
+      .custom-div-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root" class="min-h-screen bg-gray-100">
+      <header class="bg-blue-800 text-white py-4 shadow-md">
+        <div class="container mx-auto px-4">
+          <h1 class="text-2xl font-bold flex items-center">
+            <i class="fas fa-truck mr-2"></i> Truck Route Planner with HOS Compliance
+          </h1>
+        </div>
+      </header>
+
+      <main class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-1">
+            <div class="bg-white p-4 rounded shadow-md">
+              <h2 class="text-xl font-bold mb-4">Trip Details</h2>
+              
+              <form id="tripForm" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">
+                    Current Location
+                  </label>
+                  <div class="mt-1 relative">
+                    <input
+                      type="text"
+                      name="current_location"
+                      id="current_location"
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter current location"
+                    />
+                    <div id="current_location_suggestion" class="mt-1 text-sm text-gray-500 hidden"></div>
+                    <p id="current_location_error" class="mt-1 text-sm text-red-600 hidden"></p>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">
+                    Pickup Location
+                  </label>
+                  <div class="mt-1 relative">
+                    <input
+                      type="text"
+                      name="pickup_location"
+                      id="pickup_location"
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter pickup location"
+                    />
+                    <div id="pickup_location_suggestion" class="mt-1 text-sm text-gray-500 hidden"></div>
+                    <p id="pickup_location_error" class="mt-1 text-sm text-red-600 hidden"></p>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">
+                    Dropoff Location
+                  </label>
+                  <div class="mt-1 relative">
+                    <input
+                      type="text"
+                      name="dropoff_location"
+                      id="dropoff_location"
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter dropoff location"
+                    />
+                    <div id="dropoff_location_suggestion" class="mt-1 text-sm text-gray-500 hidden"></div>
+                    <p id="dropoff_location_error" class="mt-1 text-sm text-red-600 hidden"></p>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">
+                    Current Cycle Hours Used (0-70)
+                  </label>
+                  <div class="mt-1 relative">
+                    <input
+                      type="number"
+                      name="current_cycle_hours"
+                      id="current_cycle_hours"
+                      min="0"
+                      max="70"
+                      step="0.5"
+                      value="0"
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter hours used in current cycle"
+                    />
+                    <p id="current_cycle_hours_error" class="mt-1 text-sm text-red-600 hidden"></p>
+                  </div>
+                </div>
+                
+                <div class="text-sm text-gray-600">
+                  <p><i class="fas fa-info-circle mr-1"></i> Using 70 hour/8 day cycle for property-carrying drivers</p>
+                </div>
+                
+                <div class="pt-2">
+                  <button
+                    type="submit"
+                    id="submitButton"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Calculate Route
+                  </button>
+                  <div id="loading" class="hidden mt-2 text-center">
+                    <svg class="animate-spin h-5 w-5 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600">Calculating Route...</p>
+                  </div>
+                </div>
+              </form>
+              
+              <div id="errorPanel" class="mt-4 p-3 bg-red-100 text-red-700 rounded hidden">
+                <p class="font-bold">Error</p>
+                <p id="errorMessage"></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <div id="emptyState" class="bg-white p-6 rounded shadow-md flex flex-col items-center justify-center min-h-[400px] text-center">
+              <i class="fas fa-truck-moving text-6xl text-gray-300 mb-4"></i>
+              <h2 class="text-xl font-bold text-gray-700">Enter Trip Details to Calculate Your Route</h2>
+              <p class="text-gray-500 mt-2">
+                Fill out the form to get HOS-compliant route plans and ELD logs.
+              </p>
+            </div>
+            
+            <div id="resultTabs" class="bg-white rounded shadow-md hidden">
+              <div class="border-b">
+                <nav class="flex">
+                  <button 
+                    id="mapTab" 
+                    class="px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600"
+                  >
+                    <i class="fas fa-map-marked-alt mr-1"></i> Route Map
+                  </button>
+                  <button 
+                    id="detailsTab" 
+                    class="px-4 py-2 font-medium text-gray-600 hover:text-blue-600"
+                  >
+                    <i class="fas fa-info-circle mr-1"></i> Route Details
+                  </button>
+                  <button 
+                    id="logsTab" 
+                    class="px-4 py-2 font-medium text-gray-600 hover:text-blue-600"
+                  >
+                    <i class="fas fa-clipboard-list mr-1"></i> Log Sheets
+                  </button>
+                </nav>
+              </div>
+              <div class="p-4">
+                <div id="mapContent">
+                  <div id="map" class="map-container rounded"></div>
+                </div>
+                
+                <div id="detailsContent" class="hidden space-y-6">
+                  <!-- Route details will be inserted here by JavaScript -->
+                </div>
+                
+                <div id="logsContent" class="hidden">
+                  <div class="mb-4 flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Driver's Daily Logs</h3>
+                    <div class="flex space-x-2">
+                      <button 
+                        id="prevLogBtn"
+                        class="px-2 py-1 bg-gray-200 rounded"
+                        disabled
+                      >
+                        <i class="fas fa-chevron-left"></i> Previous
+                      </button>
+                      <span class="px-2 py-1" id="logPagination">
+                        Log 1 of 1
+                      </span>
+                      <button 
+                        id="nextLogBtn"
+                        class="px-2 py-1 bg-gray-200 rounded"
+                        disabled
+                      >
+                        Next <i class="fas fa-chevron-right"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div id="logSheet">
+                    <!-- Log sheet will be inserted here by JavaScript -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="bg-gray-800 text-white py-4 mt-8">
+        <div class="container mx-auto px-4 text-center">
+          <p>Truck Route Planner with HOS Compliance &copy; <span id="currentYear"></span></p>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Main application script -->
+    <script src="app.js"></script>
+  </body>
+</html>
