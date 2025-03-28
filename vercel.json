@@ -1,5 +1,7 @@
 {
-  "buildCommand": null,
+  "version": 2,
+  "buildCommand": false,
+  "devCommand": "echo 'No dev command'",
   "outputDirectory": ".",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
